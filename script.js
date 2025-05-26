@@ -315,7 +315,21 @@ class RogueSweeper {
     }
     
     checkBombFlags() {
-        if (this.gameState !== 'playing') {
+        if (this.gameState !== 'playing' && this.gameState !== 'waiting') {
+            return;
+        }
+        
+        // If waiting state, need to start the game first
+        if (this.gameState === 'waiting') {
+            // Can't check if no mines are placed yet
+            const checkBtn = document.getElementById('checkBtn');
+            checkBtn.textContent = 'ゲーム開始してください';
+            checkBtn.style.background = 'linear-gradient(45deg, #95a5a6, #7f8c8d)';
+            
+            setTimeout(() => {
+                checkBtn.textContent = '爆弾チェック';
+                checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
+            }, 2000);
             return;
         }
         
@@ -517,13 +531,20 @@ class RogueSweeper {
     updateCheckButton() {
         const checkBtn = document.getElementById('checkBtn');
         
-        if (this.gameState !== 'playing') {
-            checkBtn.disabled = true;
+        // Always enable the button, but show different states
+        checkBtn.disabled = false;
+        
+        if (this.gameState === 'waiting') {
             checkBtn.classList.remove('ready');
+            checkBtn.textContent = '爆弾チェック';
             return;
         }
         
-        checkBtn.disabled = false;
+        if (this.gameState !== 'playing') {
+            checkBtn.classList.remove('ready');
+            checkBtn.textContent = '爆弾チェック';
+            return;
+        }
         
         // Check if we have the right number of flags
         if (this.flaggedCells === this.totalMines) {
@@ -531,7 +552,12 @@ class RogueSweeper {
             checkBtn.textContent = '爆弾チェック ✨';
         } else {
             checkBtn.classList.remove('ready');
-            checkBtn.textContent = '爆弾チェック';
+            if (this.flaggedCells === 0) {
+                checkBtn.textContent = '爆弾チェック';
+            } else {
+                const remaining = this.totalMines - this.flaggedCells;
+                checkBtn.textContent = `爆弾チェック (${Math.abs(remaining)})`;
+            }
         }
     }
     
