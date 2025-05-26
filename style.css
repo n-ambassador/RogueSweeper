@@ -314,6 +314,18 @@ header h1 {
     border-left: 4px solid #3498db;
 }
 
+.instruction.challenge-rule {
+    background: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid #e74c3c;
+    border: 2px solid #e74c3c;
+    animation: challenge-glow 2s infinite alternate;
+}
+
+@keyframes challenge-glow {
+    0% { box-shadow: 0 0 5px rgba(231, 76, 60, 0.3); }
+    100% { box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); }
+}
+
 footer {
     text-align: center;
     margin-top: 2rem;

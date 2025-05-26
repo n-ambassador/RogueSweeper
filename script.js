@@ -355,8 +355,11 @@ class RogueSweeper {
         if (correctFlags === this.totalMines && incorrectFlags === 0) {
             // Perfect flagging! Win the game
             this.endGame(true, 'perfect');
+        } else if (incorrectFlags > 0) {
+            // Challenge mode: Wrong flags = game over!
+            this.endGame(false, 'wrong_flag');
         } else {
-            // Show feedback about incorrect flags
+            // Show feedback about missing flags
             this.showFlagFeedback(correctFlags, incorrectFlags);
         }
     }
@@ -426,6 +429,9 @@ class RogueSweeper {
                 }
             }
             this.renderBoard();
+        } else if (winType === 'wrong_flag') {
+            // Show all mines when failed by wrong flag
+            this.revealAllMines();
         }
         
         setTimeout(() => {
@@ -447,8 +453,13 @@ class RogueSweeper {
                 message.textContent = 'おめでとうございます！';
             }
         } else {
-            title.textContent = '💥 失敗...';
-            message.textContent = '地雷を踏んでしまいました...';
+            if (winType === 'wrong_flag') {
+                title.textContent = '🚩 チャレンジ失敗！';
+                message.textContent = '間違った場所にフラグを立てていました...';
+            } else {
+                title.textContent = '💥 失敗...';
+                message.textContent = '地雷を踏んでしまいました...';
+            }
         }
         
         // Calculate statistics
