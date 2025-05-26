@@ -355,59 +355,18 @@ class RogueSweeper {
         if (correctFlags === this.totalMines && incorrectFlags === 0) {
             // Perfect flagging! Win the game
             this.endGame(true, 'perfect');
-        } else if (incorrectFlags > 0) {
-            // Challenge mode: Wrong flags = game over!
-            this.endGame(false, 'wrong_flag');
         } else {
-            // Show feedback about missing flags
-            this.showFlagFeedback(correctFlags, incorrectFlags);
-        }
-    }
-    
-    showFlagFeedback(correctFlags, incorrectFlags) {
-        const checkBtn = document.getElementById('checkBtn');
-        
-        if (incorrectFlags > 0) {
-            // Highlight incorrect flags
-            this.highlightIncorrectFlags();
-            checkBtn.textContent = `誤フラグ: ${incorrectFlags}個`;
-            checkBtn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
-            
-            setTimeout(() => {
-                checkBtn.textContent = '💣 爆弾チェック';
-                checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
-                this.clearHighlights();
-            }, 2000);
-        } else if (correctFlags < this.totalMines) {
-            // Need more flags
-            const remaining = this.totalMines - correctFlags;
-            checkBtn.textContent = `あと${remaining}個`;
-            checkBtn.style.background = 'linear-gradient(45deg, #f39c12, #e67e22)';
-            
-            setTimeout(() => {
-                checkBtn.textContent = '💣 爆弾チェック';
-                checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
-            }, 2000);
-        }
-    }
-    
-    highlightIncorrectFlags() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const cell = this.board[row][col];
-                
-                if (cell.isFlagged && !cell.isMine) {
-                    const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                    cellElement.classList.add('incorrect-flag');
-                }
+            // Challenge mode: Any incorrect count = game over!
+            let loseReason = 'imperfect';
+            if (incorrectFlags > 0) {
+                loseReason = 'wrong_flag';
+            } else if (correctFlags < this.totalMines) {
+                loseReason = 'missing_flags';
+            } else if (correctFlags > this.totalMines) {
+                loseReason = 'too_many_flags';
             }
+            this.endGame(false, loseReason);
         }
-    }
-    
-    clearHighlights() {
-        document.querySelectorAll('.incorrect-flag').forEach(cell => {
-            cell.classList.remove('incorrect-flag');
-        });
     }
     
     endGame(won, winType = 'normal') {
@@ -429,8 +388,8 @@ class RogueSweeper {
                 }
             }
             this.renderBoard();
-        } else if (winType === 'wrong_flag') {
-            // Show all mines when failed by wrong flag
+        } else if (winType !== 'normal') {
+            // Show all mines when failed by check button (any challenge failure)
             this.revealAllMines();
         }
         
@@ -456,6 +415,12 @@ class RogueSweeper {
             if (winType === 'wrong_flag') {
                 title.textContent = '🚩 チャレンジ失敗！';
                 message.textContent = '間違った場所にフラグを立てていました...';
+            } else if (winType === 'missing_flags') {
+                title.textContent = '⚠️ チャレンジ失敗！';
+                message.textContent = 'フラグが足りませんでした...';
+            } else if (winType === 'too_many_flags') {
+                title.textContent = '⚠️ チャレンジ失敗！';
+                message.textContent = 'フラグが多すぎました...';
             } else {
                 title.textContent = '💥 失敗...';
                 message.textContent = '地雷を踏んでしまいました...';
