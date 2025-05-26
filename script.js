@@ -18,6 +18,10 @@ class RogueSweeper {
         this.currentStage = 1;
         this.totalScore = 0;
         this.stagesCleared = 0;
+        this.lives = 3;
+        
+        // Item/skill system
+        this.selectedReward = null;
         
         // Game board
         this.board = [];
@@ -41,6 +45,7 @@ class RogueSweeper {
         this.currentStage = 1;
         this.totalScore = 0;
         this.stagesCleared = 0;
+        this.lives = 3;
         this.startStage();
     }
     
@@ -376,15 +381,103 @@ class RogueSweeper {
         
         overlay.style.display = 'flex';
         
-        // Auto advance to next stage after delay
+        // Show reward selection after delay
         setTimeout(() => {
-            this.nextStage();
-        }, 3000);
+            this.showRewardSelection();
+        }, 2000);
+    }
+    
+    showRewardSelection() {
+        const overlay = document.getElementById('gameOverlay');
+        const title = document.getElementById('overlayTitle');
+        const message = document.getElementById('overlayMessage');
+        
+        title.textContent = '🎁 報酬を選択';
+        message.textContent = '1つを選んでください';
+        
+        // Generate 3 reward options
+        const rewards = this.generateRewardOptions();
+        
+        // Show reward options in stats area
+        document.getElementById('finalTime').textContent = '';
+        document.getElementById('flagAccuracy').textContent = '';
+        document.getElementById('cellsOpened').innerHTML = `
+            <div class="reward-selection">
+                <button class="reward-btn" data-reward="0">
+                    ${rewards[0].icon} ${rewards[0].name}<br>
+                    <small>${rewards[0].description}</small>
+                </button>
+                <button class="reward-btn" data-reward="1">
+                    ${rewards[1].icon} ${rewards[1].name}<br>
+                    <small>${rewards[1].description}</small>
+                </button>
+                <button class="reward-btn" data-reward="2">
+                    ${rewards[2].icon} ${rewards[2].name}<br>
+                    <small>${rewards[2].description}</small>
+                </button>
+            </div>
+        `;
+        
+        // Add event listeners to reward buttons
+        document.querySelectorAll('.reward-btn').forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                this.selectReward(rewards[index]);
+            });
+        });
+        
+        document.getElementById('playAgainBtn').style.display = 'none';
+    }
+    
+    generateRewardOptions() {
+        const rewardTypes = [
+            {
+                icon: '❤️',
+                name: 'ライフ+1',
+                description: 'ライフが1つ増加',
+                type: 'life',
+                value: 1
+            },
+            {
+                icon: '❤️',
+                name: 'ライフ+2',
+                description: 'ライフが2つ増加',
+                type: 'life',
+                value: 2
+            },
+            {
+                icon: '❤️',
+                name: 'ライフ最大回復',
+                description: 'ライフを最大まで回復',
+                type: 'life_full',
+                value: 5
+            }
+        ];
+        
+        // For now, just return 3 random life-based rewards
+        const options = [];
+        for (let i = 0; i < 3; i++) {
+            const reward = rewardTypes[Math.floor(Math.random() * rewardTypes.length)];
+            options.push({ ...reward });
+        }
+        
+        return options;
+    }
+    
+    selectReward(reward) {
+        // Apply reward effect
+        if (reward.type === 'life') {
+            this.lives += reward.value;
+        } else if (reward.type === 'life_full') {
+            this.lives = Math.max(this.lives, reward.value);
+        }
+        
+        // Hide overlay and proceed to next stage
+        document.getElementById('gameOverlay').style.display = 'none';
+        this.nextStage();
     }
     
     nextStage() {
         this.currentStage++;
-        document.getElementById('gameOverlay').style.display = 'none';
         this.startStage();
     }
     
@@ -444,6 +537,17 @@ class RogueSweeper {
     }
     
     endGame(won, winType = 'normal') {
+        if (!won) {
+            this.lives--;
+            
+            // If still have lives, restart current stage
+            if (this.lives > 0) {
+                this.clearTimer();
+                this.showLifeLostOverlay();
+                return;
+            }
+        }
+        
         this.gameState = won ? 'won' : 'lost';
         this.clearTimer();
         
@@ -470,6 +574,28 @@ class RogueSweeper {
         setTimeout(() => {
             this.showGameOverlay(won, winType);
         }, 500);
+    }
+    
+    showLifeLostOverlay() {
+        const overlay = document.getElementById('gameOverlay');
+        const title = document.getElementById('overlayTitle');
+        const message = document.getElementById('overlayMessage');
+        
+        title.textContent = '💔 ライフ消費';
+        message.textContent = `残りライフ: ${this.lives}`;
+        
+        document.getElementById('finalTime').textContent = this.elapsedTime.toString().padStart(3, '0');
+        document.getElementById('flagAccuracy').textContent = '0';
+        document.getElementById('cellsOpened').textContent = 'ステージ再挑戦';
+        
+        document.getElementById('playAgainBtn').style.display = 'none';
+        overlay.style.display = 'flex';
+        
+        // Auto restart after 2 seconds
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            this.startStage(); // Restart current stage
+        }, 2000);
     }
     
     showGameOverlay(won, winType = 'normal') {
@@ -568,6 +694,7 @@ class RogueSweeper {
         document.getElementById('flagCount').textContent = this.flaggedCells;
         document.getElementById('currentStage').textContent = this.currentStage;
         document.getElementById('totalScore').textContent = this.totalScore;
+        document.getElementById('livesCount').textContent = this.lives;
         
         // Update check button state
         this.updateCheckButton();
