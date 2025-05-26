@@ -22,6 +22,8 @@ class RogueSweeper {
         
         // Item/skill system
         this.selectedReward = null;
+        this.safeRevealUses = 1; // 初期装備として1つ持つ
+        this.safeRevealMode = false;
         
         // Game board
         this.board = [];
@@ -175,13 +177,24 @@ class RogueSweeper {
         
         if (cellData.isFlagged) {
             cellElement.classList.add('flagged');
-            cellElement.textContent = '🚩';
+            if (cellData.autoFlagged) {
+                cellElement.classList.add('auto-flagged');
+                cellElement.textContent = '🔒';
+            } else {
+                cellElement.textContent = '🚩';
+            }
         } else if (cellData.isRevealed) {
             cellElement.classList.add('revealed');
             
             if (cellData.isMine) {
-                cellElement.classList.add('mine');
-                cellElement.textContent = '💣';
+                // Check if this is a life-lost mine (has life-lost class)
+                if (cellElement.classList.contains('life-lost')) {
+                    cellElement.style.background = 'linear-gradient(145deg, #ff6b6b, #e55656)';
+                    cellElement.textContent = '💔';
+                } else {
+                    cellElement.classList.add('mine');
+                    cellElement.textContent = '💣';
+                }
             } else if (cellData.neighborMines > 0) {
                 cellElement.textContent = cellData.neighborMines;
                 cellElement.classList.add(`num-${cellData.neighborMines}`);
@@ -223,18 +236,91 @@ class RogueSweeper {
         }
         
         if (cell.isMine) {
-            this.revealAllMines();
-            this.endGame(false);
+            // Use life to survive the mine
+            if (this.lives > 1) {
+                this.lives--;
+                this.showLifeLostMessage(row, col);
+                this.revealCell(row, col); // Reveal the mine but don't end game
+                this.renderBoard();
+                this.updateUI();
+            } else {
+                // Last life - game over
+                this.revealAllMines();
+                this.endGame(false);
+            }
         } else {
             this.revealCell(row, col);
+            this.renderBoard();
             this.checkWinCondition();
         }
+    }
+    
+    showLifeLostMessage(row, col) {
+        // Create visual feedback for life lost
+        const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        cellElement.style.background = 'linear-gradient(145deg, #ff6b6b, #e55656)';
+        cellElement.textContent = '💔';
+        cellElement.classList.add('life-lost');
+        
+        // Show floating damage text
+        this.showFloatingText(`-1 ライフ (残り${this.lives})`, row, col, '#ff6b6b');
+        
+        // Temporary screen effect
+        document.body.style.background = 'rgba(255, 0, 0, 0.2)';
+        setTimeout(() => {
+            document.body.style.background = '';
+        }, 300);
+    }
+    
+    showFloatingText(text, row, col, color = '#fff') {
+        const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        const rect = cellElement.getBoundingClientRect();
+        
+        const floatingText = document.createElement('div');
+        floatingText.textContent = text;
+        floatingText.style.cssText = `
+            position: fixed;
+            left: ${rect.left + rect.width/2}px;
+            top: ${rect.top}px;
+            color: ${color};
+            font-weight: bold;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+            transform: translateX(-50%);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        `;
+        
+        document.body.appendChild(floatingText);
+        
+        // Animate upward and fade out
+        let opacity = 1;
+        let y = 0;
+        const animate = () => {
+            y -= 2;
+            opacity -= 0.02;
+            floatingText.style.transform = `translate(-50%, ${y}px)`;
+            floatingText.style.opacity = opacity;
+            
+            if (opacity > 0) {
+                requestAnimationFrame(animate);
+            } else {
+                floatingText.remove();
+            }
+        };
+        animate();
     }
     
     handleRightClick(row, col) {
         const cell = this.board[row][col];
         
         if (cell.isRevealed) {
+            return;
+        }
+        
+        // 自動フラグは外せない
+        if (cell.isFlagged && cell.autoFlagged) {
+            this.showFloatingText('自動フラグは外せません', row, col, '#ff6b6b');
             return;
         }
         
@@ -281,6 +367,7 @@ class RogueSweeper {
                 }
             });
             
+            this.renderBoard();
             this.checkWinCondition();
         }
     }
@@ -295,15 +382,15 @@ class RogueSweeper {
         cell.isRevealed = true;
         this.revealedCells++;
         
-        // If cell has no neighboring mines, reveal all neighbors
-        if (cell.neighborMines === 0) {
+        // If cell has no neighboring mines and is not a mine itself, reveal all neighbors
+        if (cell.neighborMines === 0 && !cell.isMine) {
             const neighbors = this.getNeighbors(row, col);
             neighbors.forEach(([nRow, nCol]) => {
                 this.revealCell(nRow, nCol);
             });
         }
         
-        this.renderBoard();
+        // renderBoard()は呼び出し元で行う
     }
     
     getNeighbors(row, col) {
@@ -438,22 +525,15 @@ class RogueSweeper {
                 value: 1
             },
             {
-                icon: '❤️',
-                name: 'ライフ+2',
-                description: 'ライフが2つ増加',
-                type: 'life',
-                value: 2
-            },
-            {
-                icon: '❤️',
-                name: 'ライフ最大回復',
-                description: 'ライフを最大まで回復',
-                type: 'life_full',
-                value: 5
+                icon: '🛡️',
+                name: 'アーマー',
+                description: '任意のマスを安全に確認',
+                type: 'safe_reveal',
+                value: 1
             }
         ];
         
-        // For now, just return 3 random life-based rewards
+        // Generate 3 random rewards
         const options = [];
         for (let i = 0; i < 3; i++) {
             const reward = rewardTypes[Math.floor(Math.random() * rewardTypes.length)];
@@ -467,8 +547,8 @@ class RogueSweeper {
         // Apply reward effect
         if (reward.type === 'life') {
             this.lives += reward.value;
-        } else if (reward.type === 'life_full') {
-            this.lives = Math.max(this.lives, reward.value);
+        } else if (reward.type === 'safe_reveal') {
+            this.safeRevealUses = (this.safeRevealUses || 0) + reward.value;
         }
         
         // Hide overlay and proceed to next stage
@@ -695,9 +775,11 @@ class RogueSweeper {
         document.getElementById('currentStage').textContent = this.currentStage;
         document.getElementById('totalScore').textContent = this.totalScore;
         document.getElementById('livesCount').textContent = this.lives;
+        document.getElementById('safeRevealCount').textContent = this.safeRevealUses;
         
         // Update check button state
         this.updateCheckButton();
+        this.updateSafeRevealButton();
     }
     
     updateCheckButton() {
@@ -733,6 +815,22 @@ class RogueSweeper {
         }
     }
     
+    updateSafeRevealButton() {
+        const safeBtn = document.getElementById('safeRevealBtn');
+        
+        if (this.safeRevealUses <= 0) {
+            safeBtn.disabled = true;
+            safeBtn.textContent = '🛡️ アーマー (使用不可)';
+        } else {
+            safeBtn.disabled = false;
+            if (this.safeRevealMode) {
+                safeBtn.textContent = '🛡️ モード中 (クリックしてキャンセル)';
+            } else {
+                safeBtn.textContent = `🛡️ アーマー (${this.safeRevealUses})`;
+            }
+        }
+    }
+    
     bindEvents() {
         // New game button
         document.getElementById('newGameBtn').addEventListener('click', () => {
@@ -749,6 +847,11 @@ class RogueSweeper {
             this.checkBombFlags();
         });
         
+        // Safe reveal button
+        document.getElementById('safeRevealBtn').addEventListener('click', () => {
+            this.toggleSafeRevealMode();
+        });
+        
         // Play again button
         document.getElementById('playAgainBtn').addEventListener('click', () => {
             console.log('Play again clicked'); // Debug log
@@ -760,7 +863,11 @@ class RogueSweeper {
             if (e.target.classList.contains('cell')) {
                 const row = parseInt(e.target.dataset.row);
                 const col = parseInt(e.target.dataset.col);
-                this.handleCellClick(row, col, 0);
+                if (this.safeRevealMode) {
+                    this.useSafeReveal(row, col);
+                } else {
+                    this.handleCellClick(row, col, 0);
+                }
             }
         });
         
@@ -769,7 +876,11 @@ class RogueSweeper {
                 e.preventDefault();
                 const row = parseInt(e.target.dataset.row);
                 const col = parseInt(e.target.dataset.col);
-                this.handleCellClick(row, col, 2);
+                if (this.safeRevealMode) {
+                    this.useSafeReveal(row, col);
+                } else {
+                    this.handleCellClick(row, col, 2);
+                }
             }
         });
         
@@ -778,7 +889,11 @@ class RogueSweeper {
                 e.preventDefault();
                 const row = parseInt(e.target.dataset.row);
                 const col = parseInt(e.target.dataset.col);
-                this.handleCellClick(row, col, 1);
+                if (this.safeRevealMode) {
+                    this.useSafeReveal(row, col);
+                } else {
+                    this.handleCellClick(row, col, 1);
+                }
             }
         });
         
@@ -788,6 +903,73 @@ class RogueSweeper {
                 e.preventDefault();
             }
         });
+    }
+    
+    toggleSafeRevealMode() {
+        if (this.safeRevealUses <= 0) return;
+        
+        this.safeRevealMode = !this.safeRevealMode;
+        const btn = document.getElementById('safeRevealBtn');
+        
+        if (this.safeRevealMode) {
+            btn.textContent = '🛡️ モード中 (クリックしてキャンセル)';
+            btn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+            this.showFloatingText('任意のマスをクリックしてください', 0, 0, '#9b59b6');
+        } else {
+            btn.textContent = '🛡️ アーマー';
+            btn.style.background = '';
+        }
+    }
+    
+    useSafeReveal(row, col) {
+        const cell = this.board[row][col];
+        
+        if (cell.isRevealed || cell.isFlagged) {
+            this.showFloatingText('そのマスは使用できません', row, col, '#ff6b6b');
+            // モードは継続（別のマスを選ばせる）
+            return;
+        }
+        
+        // 使用回数を消費
+        this.safeRevealUses--;
+        this.safeRevealMode = false;
+        
+        if (cell.isMine) {
+            // 爆弾だった場合：ライフを消費して自動フラグ設置
+            if (this.lives > 1) {
+                this.lives--;
+                cell.isFlagged = true;
+                cell.autoFlagged = true;
+                this.flaggedCells++;
+                this.showFloatingText(`爆弾発見！ライフ-1 (残り${this.lives})`, row, col, '#e74c3c');
+                // フラグ設置後は盤面を再描画
+                this.renderBoard();
+            } else {
+                // 最後のライフの場合はゲームオーバー
+                this.revealAllMines();
+                // UIを更新してからゲーム終了
+                const btn = document.getElementById('safeRevealBtn');
+                btn.textContent = '🛡️ アーマー';
+                btn.style.background = '';
+                this.renderBoard();
+                this.updateUI();
+                this.endGame(false);
+                return;
+            }
+        } else {
+            // 安全なマスだった場合：普通に開く
+            this.revealCell(row, col);
+            this.renderBoard(); // 盤面を再描画
+            this.showFloatingText('安全なマスでした', row, col, '#2ecc71');
+        }
+        
+        // UIを更新
+        const btn = document.getElementById('safeRevealBtn');
+        btn.textContent = '🛡️ アーマー';
+        btn.style.background = '';
+        
+        this.updateUI();
+        this.checkWinCondition();
     }
 }
 
