@@ -314,7 +314,86 @@ class RogueSweeper {
         }
     }
     
-    endGame(won) {
+    checkBombFlags() {
+        if (this.gameState !== 'playing') {
+            return;
+        }
+        
+        // Check if all mines are flagged and no safe cells are flagged
+        let correctFlags = 0;
+        let incorrectFlags = 0;
+        
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const cell = this.board[row][col];
+                
+                if (cell.isFlagged) {
+                    if (cell.isMine) {
+                        correctFlags++;
+                    } else {
+                        incorrectFlags++;
+                    }
+                }
+            }
+        }
+        
+        // Check if all mines are flagged
+        if (correctFlags === this.totalMines && incorrectFlags === 0) {
+            // Perfect flagging! Win the game
+            this.endGame(true, 'perfect');
+        } else {
+            // Show feedback about incorrect flags
+            this.showFlagFeedback(correctFlags, incorrectFlags);
+        }
+    }
+    
+    showFlagFeedback(correctFlags, incorrectFlags) {
+        const checkBtn = document.getElementById('checkBtn');
+        
+        if (incorrectFlags > 0) {
+            // Highlight incorrect flags
+            this.highlightIncorrectFlags();
+            checkBtn.textContent = `誤フラグ: ${incorrectFlags}個`;
+            checkBtn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+            
+            setTimeout(() => {
+                checkBtn.textContent = '爆弾チェック';
+                checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
+                this.clearHighlights();
+            }, 2000);
+        } else if (correctFlags < this.totalMines) {
+            // Need more flags
+            const remaining = this.totalMines - correctFlags;
+            checkBtn.textContent = `あと${remaining}個`;
+            checkBtn.style.background = 'linear-gradient(45deg, #f39c12, #e67e22)';
+            
+            setTimeout(() => {
+                checkBtn.textContent = '爆弾チェック';
+                checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
+            }, 2000);
+        }
+    }
+    
+    highlightIncorrectFlags() {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const cell = this.board[row][col];
+                
+                if (cell.isFlagged && !cell.isMine) {
+                    const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cellElement.classList.add('incorrect-flag');
+                }
+            }
+        }
+    }
+    
+    clearHighlights() {
+        document.querySelectorAll('.incorrect-flag').forEach(cell => {
+            cell.classList.remove('incorrect-flag');
+        });
+    }
+    
+    endGame(won, winType = 'normal') {
         this.gameState = won ? 'won' : 'lost';
         this.clearTimer();
         
@@ -336,17 +415,27 @@ class RogueSweeper {
         }
         
         setTimeout(() => {
-            this.showGameOverlay(won);
+            this.showGameOverlay(won, winType);
         }, 500);
     }
     
-    showGameOverlay(won) {
+    showGameOverlay(won, winType = 'normal') {
         const overlay = document.getElementById('gameOverlay');
         const title = document.getElementById('overlayTitle');
         const message = document.getElementById('overlayMessage');
         
-        title.textContent = won ? '🎉 勝利！' : '💥 失敗...';
-        message.textContent = won ? 'おめでとうございます！' : '地雷を踏んでしまいました...';
+        if (won) {
+            if (winType === 'perfect') {
+                title.textContent = '🌟 完璧勝利！';
+                message.textContent = '全ての爆弾を正確にフラグしました！';
+            } else {
+                title.textContent = '🎉 勝利！';
+                message.textContent = 'おめでとうございます！';
+            }
+        } else {
+            title.textContent = '💥 失敗...';
+            message.textContent = '地雷を踏んでしまいました...';
+        }
         
         // Calculate statistics
         const totalCells = this.rows * this.cols;
@@ -419,7 +508,31 @@ class RogueSweeper {
             'lost': '敗北...'
         }[this.gameState];
         
-        gameStatus.className = this.gameState;
+        gameStatus.className = this.gameStatus;
+        
+        // Update check button state
+        this.updateCheckButton();
+    }
+    
+    updateCheckButton() {
+        const checkBtn = document.getElementById('checkBtn');
+        
+        if (this.gameState !== 'playing') {
+            checkBtn.disabled = true;
+            checkBtn.classList.remove('ready');
+            return;
+        }
+        
+        checkBtn.disabled = false;
+        
+        // Check if we have the right number of flags
+        if (this.flaggedCells === this.totalMines) {
+            checkBtn.classList.add('ready');
+            checkBtn.textContent = '爆弾チェック ✨';
+        } else {
+            checkBtn.classList.remove('ready');
+            checkBtn.textContent = '爆弾チェック';
+        }
     }
     
     bindEvents() {
@@ -441,6 +554,11 @@ class RogueSweeper {
         // Hint button
         document.getElementById('hintBtn').addEventListener('click', () => {
             this.giveHint();
+        });
+        
+        // Check button
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            this.checkBombFlags();
         });
         
         // Play again button

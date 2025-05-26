@@ -117,6 +117,37 @@ header h1 {
     box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
 }
 
+.check-btn {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    position: relative;
+    overflow: hidden;
+}
+
+.check-btn:hover {
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+}
+
+.check-btn:disabled {
+    background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.check-btn.ready {
+    animation: ready-pulse 2s infinite;
+}
+
+@keyframes ready-pulse {
+    0%, 100% { 
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+        transform: scale(1);
+    }
+    50% { 
+        background: linear-gradient(45deg, #f39c12, #e67e22);
+        transform: scale(1.05);
+    }
+}
+
 .game-area {
     display: flex;
     justify-content: center;
@@ -173,6 +204,17 @@ header h1 {
 .cell.safe-hint {
     background: linear-gradient(145deg, #2ecc71, #27ae60) !important;
     animation: pulse 1s infinite;
+}
+
+.cell.incorrect-flag {
+    background: linear-gradient(145deg, #e74c3c, #c0392b) !important;
+    animation: shake 0.5s ease-in-out 3;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
 }
 
 /* Number colors */
