@@ -8,11 +8,16 @@ class RogueSweeper {
         };
         
         this.currentDifficulty = 'easy';
-        this.gameState = 'waiting'; // 'waiting', 'playing', 'won', 'lost'
+        this.gameState = 'waiting'; // 'waiting', 'playing', 'won', 'lost', 'stage_complete'
         this.firstClick = true;
         this.startTime = null;
         this.timer = null;
         this.elapsedTime = 0;
+        
+        // Roguelike progression
+        this.currentStage = 1;
+        this.totalScore = 0;
+        this.stagesCleared = 0;
         
         // Game board
         this.board = [];
@@ -32,10 +37,19 @@ class RogueSweeper {
     }
     
     newGame() {
-        const config = this.difficulties[this.currentDifficulty];
-        this.rows = config.rows;
-        this.cols = config.cols;
-        this.totalMines = config.mines;
+        // Reset progression for new game
+        this.currentStage = 1;
+        this.totalScore = 0;
+        this.stagesCleared = 0;
+        this.startStage();
+    }
+    
+    startStage() {
+        // Generate stage-based configuration
+        const stageConfig = this.getStageConfig(this.currentStage);
+        this.rows = stageConfig.rows;
+        this.cols = stageConfig.cols;
+        this.totalMines = stageConfig.mines;
         
         this.gameState = 'waiting';
         this.firstClick = true;
@@ -50,6 +64,17 @@ class RogueSweeper {
         this.updateUI();
         
         document.getElementById('gameOverlay').style.display = 'none';
+    }
+    
+    getStageConfig(stage) {
+        // Progressive difficulty based on stage
+        const baseSize = Math.min(8 + Math.floor(stage / 3), 20); // Start at 8x8, grow slowly
+        const rows = baseSize + Math.floor(Math.random() * 3); // Some randomness
+        const cols = baseSize + Math.floor(Math.random() * 3);
+        const mineRatio = Math.min(0.1 + (stage * 0.01), 0.25); // Start at 10%, max 25%
+        const mines = Math.floor(rows * cols * mineRatio);
+        
+        return { rows, cols, mines };
     }
     
     createBoard() {
@@ -310,8 +335,54 @@ class RogueSweeper {
         const safeCells = totalCells - this.totalMines;
         
         if (this.revealedCells === safeCells) {
-            this.endGame(true);
+            this.completeStage('normal');
         }
+    }
+    
+    completeStage(winType = 'normal') {
+        // Calculate stage score
+        const timeBonus = Math.max(0, 300 - this.elapsedTime); // Bonus for fast completion
+        const stageScore = (this.totalMines * 10) + timeBonus + (this.currentStage * 5);
+        this.totalScore += stageScore;
+        this.stagesCleared++;
+        
+        this.gameState = 'stage_complete';
+        this.clearTimer();
+        
+        // Show stage completion overlay
+        this.showStageCompleteOverlay(stageScore, winType);
+    }
+    
+    showStageCompleteOverlay(stageScore, winType) {
+        const overlay = document.getElementById('gameOverlay');
+        const title = document.getElementById('overlayTitle');
+        const message = document.getElementById('overlayMessage');
+        
+        if (winType === 'perfect') {
+            title.textContent = '🌟 ステージクリア！';
+            message.textContent = '完璧なフラグ配置でクリア！';
+        } else {
+            title.textContent = '🎉 ステージクリア！';
+            message.textContent = 'おめでとうございます！';
+        }
+        
+        // Show stage completion stats
+        document.getElementById('finalTime').textContent = this.elapsedTime.toString().padStart(3, '0');
+        document.getElementById('flagAccuracy').textContent = '100'; // Always 100% on success
+        document.getElementById('cellsOpened').textContent = `ステージ${this.currentStage}スコア: ${stageScore}`;
+        
+        overlay.style.display = 'flex';
+        
+        // Auto advance to next stage after delay
+        setTimeout(() => {
+            this.nextStage();
+        }, 3000);
+    }
+    
+    nextStage() {
+        this.currentStage++;
+        document.getElementById('gameOverlay').style.display = 'none';
+        this.startStage();
     }
     
     checkBombFlags() {
@@ -353,8 +424,8 @@ class RogueSweeper {
         
         // Check if all mines are flagged
         if (correctFlags === this.totalMines && incorrectFlags === 0) {
-            // Perfect flagging! Win the game
-            this.endGame(true, 'perfect');
+            // Perfect flagging! Complete stage
+            this.completeStage('perfect');
         } else {
             // Challenge mode: Any incorrect count = game over!
             let loseReason = 'imperfect';
@@ -489,16 +560,8 @@ class RogueSweeper {
     updateUI() {
         document.getElementById('mineCount').textContent = this.totalMines;
         document.getElementById('flagCount').textContent = this.flaggedCells;
-        
-        const gameStatus = document.getElementById('gameStatus');
-        gameStatus.textContent = {
-            'waiting': '待機中',
-            'playing': 'プレイ中',
-            'won': '勝利！',
-            'lost': '敗北...'
-        }[this.gameState];
-        
-        gameStatus.className = this.gameStatus;
+        document.getElementById('currentStage').textContent = this.currentStage;
+        document.getElementById('totalScore').textContent = this.totalScore;
         
         // Update check button state
         this.updateCheckButton();
@@ -538,16 +601,6 @@ class RogueSweeper {
     }
     
     bindEvents() {
-        // Difficulty selection
-        document.querySelectorAll('.difficulty-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentDifficulty = btn.dataset.difficulty;
-                this.newGame();
-            });
-        });
-        
         // New game button
         document.getElementById('newGameBtn').addEventListener('click', () => {
             this.newGame();

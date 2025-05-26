@@ -88,32 +88,29 @@ header h1 {
     justify-content: center;
 }
 
-.difficulty-selector {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+.roguelike-info {
+    margin-bottom: 1rem;
 }
 
-.difficulty-btn {
-    background: rgba(52, 152, 219, 0.2);
-    color: #ecf0f1;
+.info-box {
+    background: rgba(52, 152, 219, 0.1);
     border: 2px solid #3498db;
-    padding: 0.8rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.info-box h3 {
+    color: #3498db;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.info-box p {
+    color: #ecf0f1;
     font-size: 0.9rem;
-}
-
-.difficulty-btn:hover {
-    background: rgba(52, 152, 219, 0.4);
-    transform: translateY(-2px);
-}
-
-.difficulty-btn.active {
-    background: #3498db;
-    color: white;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    opacity: 0.9;
 }
 
 .action-btn {
@@ -420,10 +417,10 @@ footer {
         gap: 1rem;
     }
     
-    .difficulty-selector {
-        flex-direction: column;
+    .roguelike-info {
         width: 100%;
-        max-width: 300px;
+        max-width: 400px;
+        margin: 0 auto 1rem auto;
     }
     
     .action-btn {
