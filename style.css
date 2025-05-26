@@ -71,6 +71,13 @@ header h1 {
     flex-wrap: wrap;
 }
 
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 .difficulty-selector {
     display: flex;
     gap: 0.5rem;
@@ -121,6 +128,9 @@ header h1 {
     background: linear-gradient(45deg, #2ecc71, #27ae60);
     position: relative;
     overflow: hidden;
+    border: 2px solid #27ae60;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 .check-btn:hover {
@@ -350,12 +360,19 @@ footer {
     .controls {
         flex-direction: column;
         align-items: center;
+        gap: 1rem;
     }
     
     .difficulty-selector {
         flex-direction: column;
         width: 100%;
         max-width: 300px;
+    }
+    
+    .action-btn {
+        width: 100%;
+        max-width: 200px;
+        margin: 0.2rem 0;
     }
     
     .cell {

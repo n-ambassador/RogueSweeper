@@ -327,7 +327,7 @@ class RogueSweeper {
             checkBtn.style.background = 'linear-gradient(45deg, #95a5a6, #7f8c8d)';
             
             setTimeout(() => {
-                checkBtn.textContent = '爆弾チェック';
+                checkBtn.textContent = '💣 爆弾チェック';
                 checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
             }, 2000);
             return;
@@ -371,7 +371,7 @@ class RogueSweeper {
             checkBtn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
             
             setTimeout(() => {
-                checkBtn.textContent = '爆弾チェック';
+                checkBtn.textContent = '💣 爆弾チェック';
                 checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
                 this.clearHighlights();
             }, 2000);
@@ -382,7 +382,7 @@ class RogueSweeper {
             checkBtn.style.background = 'linear-gradient(45deg, #f39c12, #e67e22)';
             
             setTimeout(() => {
-                checkBtn.textContent = '爆弾チェック';
+                checkBtn.textContent = '💣 爆弾チェック';
                 checkBtn.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
             }, 2000);
         }
@@ -536,27 +536,27 @@ class RogueSweeper {
         
         if (this.gameState === 'waiting') {
             checkBtn.classList.remove('ready');
-            checkBtn.textContent = '爆弾チェック';
+            checkBtn.textContent = '💣 爆弾チェック';
             return;
         }
         
         if (this.gameState !== 'playing') {
             checkBtn.classList.remove('ready');
-            checkBtn.textContent = '爆弾チェック';
+            checkBtn.textContent = '💣 爆弾チェック';
             return;
         }
         
         // Check if we have the right number of flags
         if (this.flaggedCells === this.totalMines) {
             checkBtn.classList.add('ready');
-            checkBtn.textContent = '爆弾チェック ✨';
+            checkBtn.textContent = '💣 爆弾チェック ✨';
         } else {
             checkBtn.classList.remove('ready');
             if (this.flaggedCells === 0) {
-                checkBtn.textContent = '爆弾チェック';
+                checkBtn.textContent = '💣 爆弾チェック';
             } else {
                 const remaining = this.totalMines - this.flaggedCells;
-                checkBtn.textContent = `爆弾チェック (${Math.abs(remaining)})`;
+                checkBtn.textContent = `💣 爆弾チェック (${Math.abs(remaining)})`;
             }
         }
     }
