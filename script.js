@@ -48,6 +48,8 @@ class RogueSweeper {
         this.totalScore = 0;
         this.stagesCleared = 0;
         this.lives = 3;
+        this.safeRevealUses = 1; // 初期装備として1つ持つ
+        this.safeRevealMode = false;
         this.startStage();
     }
     
