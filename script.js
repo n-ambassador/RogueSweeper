@@ -371,6 +371,9 @@ class RogueSweeper {
         document.getElementById('flagAccuracy').textContent = '100'; // Always 100% on success
         document.getElementById('cellsOpened').textContent = `ステージ${this.currentStage}スコア: ${stageScore}`;
         
+        // Hide button for auto-advancing stages
+        document.getElementById('playAgainBtn').style.display = 'none';
+        
         overlay.style.display = 'flex';
         
         // Auto advance to next stage after delay
@@ -506,6 +509,9 @@ class RogueSweeper {
         document.getElementById('flagAccuracy').textContent = flagAccuracy;
         document.getElementById('cellsOpened').textContent = this.revealedCells;
         
+        // Show restart button for game over (not stage completion)
+        document.getElementById('playAgainBtn').style.display = 'inline-block';
+        
         overlay.style.display = 'flex';
     }
     
@@ -618,6 +624,7 @@ class RogueSweeper {
         
         // Play again button
         document.getElementById('playAgainBtn').addEventListener('click', () => {
+            console.log('Play again clicked'); // Debug log
             this.newGame();
         });
         
