@@ -48,7 +48,7 @@ class RogueSweeper {
         this.totalScore = 0;
         this.stagesCleared = 0;
         this.lives = 3;
-        this.safeRevealUses = 1; // 初期装備として1つ持つ
+        this.safeRevealUses = 1; // 新しいゲーム開始時のみアーマーを1つに設定
         this.safeRevealMode = false;
         this.startStage();
     }
@@ -560,6 +560,9 @@ class RogueSweeper {
     
     nextStage() {
         this.currentStage++;
+        // ステージクリア時にアーマーを1つ復活
+        this.safeRevealUses = 1;
+        this.safeRevealMode = false;
         this.startStage();
     }
     
