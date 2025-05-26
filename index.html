@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RogueSweeper - マインスイーパー</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>💣 RogueSweeper</h1>
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="label">地雷:</span>
+                    <span id="mineCount">10</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">フラグ:</span>
+                    <span id="flagCount">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">時間:</span>
+                    <span id="timer">000</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">ゲーム:</span>
+                    <span id="gameStatus">待機中</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="controls">
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">
+                    初級 (9×9, 10地雷)
+                </button>
+                <button class="difficulty-btn" data-difficulty="medium">
+                    中級 (16×16, 40地雷)
+                </button>
+                <button class="difficulty-btn" data-difficulty="hard">
+                    上級 (30×16, 99地雷)
+                </button>
+            </div>
+            <button id="newGameBtn" class="action-btn">新しいゲーム</button>
+            <button id="hintBtn" class="action-btn">ヒント</button>
+        </div>
+        
+        <div class="game-area">
+            <div id="minefield" class="minefield"></div>
+            
+            <div class="game-overlay" id="gameOverlay" style="display: none;">
+                <div class="overlay-content">
+                    <h2 id="overlayTitle">ゲーム終了</h2>
+                    <p id="overlayMessage">お疲れ様でした！</p>
+                    <div class="overlay-stats">
+                        <div>時間: <span id="finalTime">000</span>秒</div>
+                        <div>フラグ精度: <span id="flagAccuracy">0</span>%</div>
+                        <div>開いたセル: <span id="cellsOpened">0</span></div>
+                    </div>
+                    <button id="playAgainBtn" class="action-btn">もう一度プレイ</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>操作方法</h3>
+            <div class="instruction-grid">
+                <div class="instruction">
+                    <strong>左クリック:</strong> セルを開く
+                </div>
+                <div class="instruction">
+                    <strong>右クリック:</strong> フラグの設置/解除
+                </div>
+                <div class="instruction">
+                    <strong>中クリック:</strong> 周囲の安全なセルを一括開放
+                </div>
+                <div class="instruction">
+                    <strong>数字:</strong> 周囲の地雷数を表示
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>地雷を避けて全てのセルを開こう！</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
