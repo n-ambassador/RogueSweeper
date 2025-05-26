@@ -33,6 +33,16 @@ header h1 {
     background-clip: text;
 }
 
+.version {
+    font-size: 0.6em;
+    color: #95a5a6;
+    background: none;
+    -webkit-text-fill-color: #95a5a6;
+    text-shadow: none;
+    font-weight: normal;
+    opacity: 0.8;
+}
+
 .game-info {
     display: flex;
     justify-content: center;
@@ -331,6 +341,41 @@ footer {
     margin-top: 2rem;
     opacity: 0.7;
     font-size: 0.9rem;
+}
+
+.changelog {
+    margin-top: 2rem;
+    background: rgba(52, 73, 94, 0.3);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid rgba(236, 240, 241, 0.2);
+}
+
+.changelog h4 {
+    color: #3498db;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.version-history {
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.version-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(236, 240, 241, 0.1);
+    font-size: 0.85rem;
+}
+
+.version-item:last-child {
+    border-bottom: none;
+}
+
+.version-item strong {
+    color: #f39c12;
+    margin-right: 0.5rem;
 }
 
 /* Animations */
